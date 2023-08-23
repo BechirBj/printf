@@ -1,117 +1,70 @@
+_printf.c
+
+
 #include "main.h"
 
-void custom_print_buf(char buff[], int *index);
+void print_buffer(char buffer[], int *buff_ind);
 
 /**
- * my_printf - My Printf function
- * @fmt: format.
- * Return: Printed characters.
+ * _printf - Printf function
+ * @format: format.
+ * Return: Printed chars.
  */
-int my_printf(const char *fmt, ...)
+int _printf(const char *format, ...)
 {
-	int i, chars_written = 0, total_written = 0;
-	int my_flags, my_width, my_precision, my_size, buf_index = 0;
-	va_list arg_list;
-	char my_buf[BUFF_SIZE];
+	int i, printed = 0, printed_chars = 0;
+	int flags, width, precision, size, buff_ind = 0;
+	va_list list;
+	char buffer[BUFF_SIZE];
 
-	if (fmt == NULL)
+	if (format == NULL)
 		return (-1);
 
-	va_start(arg_list, fmt);
+	va_start(list, format);
 
-	for (i = 0; fmt && fmt[i] != '\0'; i++)
+	for (i = 0; format && format[i] != '\0'; i++)
 	{
-		if (fmt[i] != '%')
+		if (format[i] != '%')
 		{
-			my_buf[buf_index++] = fmt[i];
-			if (buf_index == BUFF_SIZE)
-				custom_print_buf(my_buf, &buf_index);
-			chars_written++;
+			buffer[buff_ind++] = format[i];
+			if (buff_ind == BUFF_SIZE)
+				print_buffer(buffer, &buff_ind);
+			/* write(1, &format[i], 1);*/
+			printed_chars++;
 		}
 		else
 		{
-			custom_print_buf(my_buf, &buf_index);
+			print_buffer(buffer, &buff_ind);
+			flags = get_flags(format, &i);
+			width = get_width(format, &i, list);
+			precision = get_precision(format, &i, list);
+			size = get_size(format, &i);
 			++i;
-			if (fmt[i] == 'd' || fmt[i] == 'i') {
-				int num = va_arg(arg_list, int);
-				chars_written = handle_int_print(my_buf, &buf_index, num);
-				if (chars_written == -1)
-					return (-1);
-				total_written += chars_written;
-			}
+			printed = handle_print(format, &i, list, buffer,
+				flags, width, precision, size);
+			if (printed == -1)
+				return (-1);
+			printed_chars += printed;
 		}
 	}
 
-	custom_print_buf(my_buf, &buf_index);
+	print_buffer(buffer, &buff_ind);
 
-	va_end(arg_list);
+	va_end(list);
 
-	return (total_written);
+	return (printed_chars);
 }
 
 /**
- * custom_print_buf - Prints the contents of the buffer if it exists
- * @buff: Array of characters
- * @buf_index: Index to add the next character, representing the length.
+ * print_buffer - Prints the contents of the buffer if it exist
+ * @buffer: Array of chars
+ * @buff_ind: Index at which to add next char, represents the length.
  */
-void custom_print_buf(char buff[], int *buf_index)
+void print_buffer(char buffer[], int *buff_ind)
 {
-	if (*buf_index > 0)
-		write(1, &buff[0], *buf_index);
+	if (*buff_ind > 0)
+		write(1, &buffer[0], *buff_ind);
 
-	*buf_index = 0;
-}
-
-/**
- * handle_int_print - Handles printing of integer values
- * @buff: Buffer to store the formatted output
- * @buf_index: Pointer to the index in the buffer
- * @num: Integer to print
- * Return: Number of characters printed
- */
-int handle_int_print(char buff[], int *buf_index, int num)
-{
-	int chars_printed = 0;
-	if (num < 0) {
-		buff[(*buf_index)++] = '-';
-		num = -num;
-		chars_printed++;
-	}
-	chars_printed += custom_itoa(&buff[*buf_index], num);
-	*buf_index += chars_printed;
-	return chars_printed;
-}
-
-/**
- * custom_itoa - Converts an integer to a string
- * @str: Buffer to store the resulting string
- * @num: Integer to convert
- * Return: Number of digits in the converted integer
- */
-int custom_itoa(char *str, int num)
-{
-	int digits = 0;
-	int temp = num;
-
-	if (num == 0) {
-		str[0] = '0';
-		str[1] = '\0';
-		return 1;
-	}
-
-	while (temp) {
-		digits++;
-		temp /= 10;
-	}
-
-	str[digits] = '\0';
-	temp = num;
-
-	while (digits--) {
-		str[digits] = (temp % 10) + '0';
-		temp /= 10;
-	}
-
-	return num < 0 ? digits + 2 : digits + 1;
+	*buff_ind = 0;
 }
 
